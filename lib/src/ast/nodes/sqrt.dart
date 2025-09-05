@@ -61,15 +61,16 @@ class SqrtNode extends SlotableNode {
           ),
           CustomLayoutId(
             id: _SqrtPos.surd,
-            // we use IgnorePointer here to ignore root image during hit test,
-            // so 'SelectionManagerMixin.getRenderLineAtOffset' can find
-            // render lines in the base widget
             child: IgnorePointer(
-              child: LayoutBuilderPreserveBaseline(
-                builder: (context, constraints) => sqrtSvg(
-                  minDelimiterHeight: constraints.minHeight,
-                  baseWidth: constraints.minWidth,
-                  options: options,
+              child: IntrinsicWidth(
+                child: IntrinsicHeight(
+                  child: LayoutBuilderPreserveBaseline(
+                    builder: (context, constraints) => sqrtSvg(
+                      minDelimiterHeight: constraints.minHeight,
+                      baseWidth: constraints.minWidth,
+                      options: options,
+                    ),
+                  ),
                 ),
               ),
             ),
