@@ -11,6 +11,8 @@ import '../utils/render_box_layout.dart';
 
 class LineParentData extends ContainerBoxParentData<RenderBox> {
   // The first canBreakBefore has no effect
+
+  late BoxConstraints constraints;
   bool canBreakBefore = false;
 
   BoxConstraints Function(double height, double depth)? customCrossSize;
@@ -340,7 +342,7 @@ class RenderLine extends RenderBox
       } else if (childParentData.alignerOrSpacer) {
         alignerAndSpacers.add(child);
       } else {
-        final childSize = child.getLayoutSize(infiniteConstraint, dry: dry);
+        final childSize = child.getLayoutSize(constraints.loosen(), dry: dry);
         sizeMap[child] = childSize;
         final distance = dry ? 0.0 : child.getDistanceToBaseline(textBaseline)!;
         maxHeightAboveBaseline = math.max(maxHeightAboveBaseline, distance);

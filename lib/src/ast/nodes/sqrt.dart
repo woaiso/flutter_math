@@ -37,6 +37,8 @@ class SqrtNode extends SlotableNode {
     required this.base,
   });
 
+  // lib/src/ast/nodes/sqrt.dart
+
   @override
   BuildResult buildWidget(
       MathOptions options, List<BuildResult?> childBuildResults) {
@@ -62,15 +64,15 @@ class SqrtNode extends SlotableNode {
           CustomLayoutId(
             id: _SqrtPos.surd,
             child: IgnorePointer(
-              child: IntrinsicWidth(
-                child: IntrinsicHeight(
-                  child: LayoutBuilderPreserveBaseline(
-                    builder: (context, constraints) => sqrtSvg(
-                      minDelimiterHeight: constraints.minHeight,
-                      baseWidth: constraints.minWidth,
-                      options: options,
-                    ),
-                  ),
+              // ▼▼▼【修正点】▼▼▼
+              // 問題の LayoutBuilderPreserveBaseline を、
+              // 標準の LayoutBuilder に置き換える
+              child: LayoutBuilder(
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                builder: (context, constraints) => sqrtSvg(
+                  minDelimiterHeight: constraints.minHeight,
+                  baseWidth: constraints.minWidth,
+                  options: options,
                 ),
               ),
             ),

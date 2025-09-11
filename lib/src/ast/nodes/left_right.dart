@@ -5,9 +5,12 @@ import 'package:flutter/widgets.dart';
 
 import '../../font/metrics/font_metrics.dart';
 import '../../render/constants.dart';
-import '../../render/layout/layout_builder_baseline.dart';
+// ▼▼▼【変更点1】不要なインポートを削除し、必要なインポートを追加 ▼▼▼
+import 'package:flutter/material.dart'; // for SizedBox
 import '../../render/layout/line.dart';
 import '../../render/layout/shift_baseline.dart';
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 import '../../render/svg/delimiter.dart';
 import '../../render/symbols/make_symbol.dart';
 import '../options.dart';
@@ -18,18 +21,9 @@ import '../types.dart';
 
 /// Left right node.
 class LeftRightNode extends SlotableNode<EquationRowNode> {
-  /// Unicode symbol for the left delimiter character.
   final String? leftDelim;
-
-  /// Unicode symbol for the right delimiter character.
   final String? rightDelim;
-
-  /// List of inside bodys.
-  ///
-  /// Its length should be 1 longer than [middle].
   final List<EquationRowNode> body;
-
-  /// List of middle delimiter characters.
   final List<String?> middle;
 
   LeftRightNode({
@@ -51,6 +45,12 @@ class LeftRightNode extends SlotableNode<EquationRowNode> {
         // Delimiter
         return LineElement(
           customCrossSize: (height, depth) {
+            // ▼▼▼【変更点2】無限大チェックを追加 ▼▼▼
+            if (!height.isFinite || !depth.isFinite) {
+              return const BoxConstraints(minHeight: 20.0);
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             final delta = math.max(height - a, depth + a);
             final delimeterFullHeight = math.max(delta / 500 * delimiterFactor,
                 2 * delta - delimiterShorfall.toLpUnder(options));
@@ -59,27 +59,29 @@ class LeftRightNode extends SlotableNode<EquationRowNode> {
           trailingMargin: index == numElements - 1
               ? 0.0
               : getSpacingSize(index == 0 ? AtomType.open : AtomType.rel,
-                      body[(index + 1) ~/ 2].leftType, options.style)
-                  .toLpUnder(options),
-          child: LayoutBuilderPreserveBaseline(
+              body[(index + 1) ~/ 2].leftType, options.style)
+              .toLpUnder(options),
+          // ▼▼▼【変更点3】LayoutBuilderPreserveBaseline を LayoutBuilder に変更 ▼▼▼
+          child: LayoutBuilder(
             builder: (context, constraints) => buildCustomSizedDelimWidget(
               index == 0
                   ? leftDelim
                   : index == numElements - 1
-                      ? rightDelim
-                      : middle[index ~/ 2 - 1],
+                  ? rightDelim
+                  : middle[index ~/ 2 - 1],
               constraints.minHeight,
               options,
             ),
           ),
+          // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         );
       } else {
         // Content
         return LineElement(
           trailingMargin: getSpacingSize(
-                  body[index ~/ 2].rightType,
-                  index == numElements - 2 ? AtomType.close : AtomType.rel,
-                  options.style)
+              body[index ~/ 2].rightType,
+              index == numElements - 2 ? AtomType.close : AtomType.rel,
+              options.style)
               .toLpUnder(options),
           child: childBuildResults[index ~/ 2]!.widget,
         );
@@ -93,23 +95,19 @@ class LeftRightNode extends SlotableNode<EquationRowNode> {
     );
   }
 
+  // ... (このクラスの残りの部分は元のまま) ...
   @override
   List<MathOptions> computeChildOptions(MathOptions options) =>
       List.filled(body.length, options, growable: false);
-
   @override
   List<EquationRowNode> computeChildren() => body;
-
   @override
   AtomType get leftType => AtomType.open;
-
   @override
   AtomType get rightType => AtomType.close;
-
   @override
   bool shouldRebuildWidget(MathOptions oldOptions, MathOptions newOptions) =>
       false;
-
   @override
   LeftRightNode updateChildren(List<EquationRowNode> newChildren) =>
       LeftRightNode(
@@ -118,7 +116,6 @@ class LeftRightNode extends SlotableNode<EquationRowNode> {
         body: newChildren,
         middle: middle,
       );
-
   @override
   Map<String, Object?> toJson() => super.toJson()
     ..addAll({
