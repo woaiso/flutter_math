@@ -1,11 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-class LayoutBuilderPreserveBaseline
-    extends ConstrainedLayoutBuilder<BoxConstraints> {
-  /// Creates a widget that defers its building until layout.
-  ///
-  /// The [builder] argument must not be null.
+class LayoutBuilderPreserveBaseline extends ConstrainedLayoutBuilder<BoxConstraints> {
   const LayoutBuilderPreserveBaseline({
     Key? key,
     required LayoutWidgetBuilder builder,
@@ -15,18 +11,18 @@ class LayoutBuilderPreserveBaseline
   LayoutWidgetBuilder get builder => super.builder;
 
   @override
-  _RenderLayoutBuilderPreserveBaseline createRenderObject(
-          BuildContext context) =>
+  _RenderLayoutBuilderPreserveBaseline createRenderObject(BuildContext context) =>
       _RenderLayoutBuilderPreserveBaseline();
 }
 
+// 关键:必须按照这个顺序混入三个 mixin
 class _RenderLayoutBuilderPreserveBaseline extends RenderBox
     with
         RenderObjectWithChildMixin<RenderBox>,
-        RenderConstrainedLayoutBuilder<BoxConstraints, RenderBox> {
+        RenderObjectWithLayoutCallbackMixin, // 必须在 RenderAbstractLayoutBuilderMixin 之前
+        RenderAbstractLayoutBuilderMixin<BoxConstraints, RenderBox> {
   @override
-  double? computeDistanceToActualBaseline(TextBaseline baseline) =>
-      child?.getDistanceToActualBaseline(baseline);
+  double? computeDistanceToActualBaseline(TextBaseline baseline) => child?.getDistanceToActualBaseline(baseline);
 
   @override
   double computeMinIntrinsicWidth(double height) {
@@ -53,12 +49,15 @@ class _RenderLayoutBuilderPreserveBaseline extends RenderBox
   }
 
   @override
-  Size computeDryLayout(BoxConstraints constraints) =>
-      child?.getDryLayout(constraints) ?? Size.zero;
+  Size computeDryLayout(BoxConstraints constraints) => child?.getDryLayout(constraints) ?? Size.zero;
 
   @override
   void performLayout() {
     final constraints = this.constraints;
+    // RenderObjectWithLayoutCallbackMixin 会自动调用 layoutCallback
+    // 这里通过 runLayoutCallback() 来触发
+    runLayoutCallback();
+
     if (child != null) {
       child!.layout(constraints, parentUsesSize: true);
       size = constraints.constrain(child!.size);
@@ -73,18 +72,17 @@ class _RenderLayoutBuilderPreserveBaseline extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (child != null) context.paintChild(child!, offset);
+    if (child != null) {
+      context.paintChild(child!, offset);
+    }
   }
 
   bool _debugThrowIfNotCheckingIntrinsics() {
     assert(() {
       if (!RenderObject.debugCheckingIntrinsics) {
-        throw FlutterError(
-            'LayoutBuilder does not support returning intrinsic dimensions.\n'
-            'Calculating the intrinsic dimensions would require '
-            'running the layout '
-            'callback speculatively, which might mutate the live '
-            'render object tree.');
+        throw FlutterError('LayoutBuilderPreserveBaseline does not support returning intrinsic dimensions.\n'
+            'Calculating the intrinsic dimensions would require running the layout '
+            'callback speculatively, which might mutate the live render object tree.');
       }
       return true;
     }());
